@@ -44,9 +44,10 @@ my.prop <- table.catch / table.all
 my.prop.df <- as.data.frame(my.prop)
 st.t <- names(my.prop.df)
 my.prop.df$year <- as.numeric(rownames(my.prop.df))
-names(my.prop.df) <- c("year", "stratum", "prop","rownumber")
+my.prop.df$Var1 <- as.numeric(my.prop.df$Var1)
+levels(my.prop.df$Var2)<-c('501','502','503','504','508','509') #This is meant for strata with numeric names; Georges bucks that trend, ergo these two lines.
+my.prop.df$Var2<-as.numeric(as.character(my.prop.df$Var2))
 my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
-
 
 
 ## strat statistics
@@ -57,7 +58,7 @@ from
 groundfish.gsstratum
 ", sep="")
 
-strat.stats.df <- sqlQuery(chan, qu)
+strat.stats.df <-ROracle::dbGetQuery(chan, qu)
 
 merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all.x=TRUE, all.y=FALSE)
 
@@ -83,7 +84,7 @@ summer.strat <- data.frame(strat=summer.strat.tt$STRAT, area=summer.strat.tt$ARE
 merged.catch <- merge(catch.df, summer.strat, by="strat")
 
 # average catch per stratum per year
-stratified.mat <- lapply(yrs, function(i){tapply(subset(merged.catch, year==i)$totwgt.corr, subset(merged.catch, year==i)$strat, mean)})
+stratified.mat <- lapply(yrs, function(i){tapply(subset(merged.catch, year==i)$totwgtcorr, subset(merged.catch, year==i)$strat, mean)})
 
 #########################################################################################################
 ## PROBLEM HERE WHEN THERE IS A year WHERE THERE IS NO TOWS IN A GIVEN STRATUM, (e.g. i==15 (1984), stratum 474)
@@ -134,22 +135,22 @@ for(i in 1:length(yrs)){ # loop over years
 
   z.out <- merge(merge(z, n.tows, by="strat"), st.area, by.x="strat", by.y="stratum")
   z.out$area.divided.by.tows <- z.out$area / z.out$number.tows
-  z.out$I <- ifelse(z.out$totwgt.corr>0,1,0)
+  z.out$I <- ifelse(z.out$totwgtcorr>0,1,0)
   DWAO <- sum(z.out$area.divided.by.tows * z.out$I) * (1.852^2)
 
 
   if(DWAO>0){
     ## loop over densities
     #cc <- seq(0:(max(z.out$number.caught)+1))
-    cc <- seq(0,(max(z.out$totwgt.corr)+1), length.out=200)
+    cc <- seq(0,(max(z.out$totwgtcorr)+1), length.out=200)
     res <- data.frame(c=cc, F=rep(NA,length(cc)), G=rep(NA,length(cc)))
 
     for(ii in 1:length(cc)){
       #z.out$I <- ifelse(z.out$number.caught<=cc[ii],1,0)
-      z.out$I <- ifelse(z.out$totwgt.corr<=cc[ii],1,0)
+      z.out$I <- ifelse(z.out$totwgtcorr<=cc[ii],1,0)
       res[ii,"c"] <- cc[ii]
       #res[ii,"F"] <- 100 * (sum(z.out$area.divided.by.tows * z.out$number.caught * z.out$I) / sum(z.out$area.divided.by.tows * z.out$number.caught))
-      res[ii,"F"] <- 100 * (sum(z.out$area.divided.by.tows * z.out$totwgt.corr * z.out$I) / sum(z.out$area.divided.by.tows * z.out$totwgt.corr))
+      res[ii,"F"] <- 100 * (sum(z.out$area.divided.by.tows * z.out$totwgtcorr * z.out$I) / sum(z.out$area.divided.by.tows * z.out$totwgtcorr))
       res[ii,"G"] <- sum(z.out$area.divided.by.tows * z.out$I)
     }
 
@@ -269,4 +270,10 @@ return(final.df)
 
 
 #Test:
-distribution.usingbiomass.fct(cod.df)
+Cod_Index<-distribution.usingbiomass.fct(cod.df)
+require(reshape2)
+Cod_Index_long<-melt(Cod_Index, id.vars='year')
+Cod_Index_long$Facets<-with(Cod_Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
+
+require(ggplot2)
+ggplot(Cod_Index_long)+geom_line(data=subset(Cod_Index_long, variable!='area.surveyed'), aes(year, value, col=variable))+geom_line(data=subset(Cod_Index_long, variable=='area.surveyed'), aes(year, value))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Cod Distribution Indices (DRicard)")+facet_wrap(~Facets, scale="free_y")+xlab("Year")+ylab("")
