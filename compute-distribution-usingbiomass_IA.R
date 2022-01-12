@@ -270,10 +270,10 @@ return(final.df)
 
 
 #Test:
-Cod_Index<-distribution.usingbiomass.fct(cod.df)
+Index<-distribution.usingbiomass.fct(haddock.df) #plug in whatever species you want
 require(reshape2)
-Cod_Index_long<-melt(Cod_Index, id.vars='year')
-Cod_Index_long$Facets<-with(Cod_Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
+Index_long<-melt(Index, id.vars='year')
+Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 
 require(ggplot2)
-ggplot(Cod_Index_long)+geom_line(data=subset(Cod_Index_long, variable!='area.surveyed'), aes(year, value, col=variable))+geom_line(data=subset(Cod_Index_long, variable=='area.surveyed'), aes(year, value))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Cod Distribution Indices (DRicard)")+facet_wrap(~Facets, scale="free_y")+xlab("Year")+ylab("")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Distribution Indices (DRicard)")+xlab("Year")+ylab("")
