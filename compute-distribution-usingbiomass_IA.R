@@ -45,7 +45,12 @@ my.prop.df <- as.data.frame(my.prop)
 st.t <- names(my.prop.df)
 my.prop.df$year <- as.numeric(rownames(my.prop.df))
 my.prop.df$Var1 <- as.numeric(my.prop.df$Var1)
-levels(my.prop.df$Var2)<-c('501','502','503','504','508','509') #This is meant for strata with numeric names; Georges bucks that trend, ergo these two lines.
+###For EGB, the strata are non-numeric, so if non-numeric strata exist they need to be converted to numeric:
+if(is.factor(my.prop.df$Var2)==TRUE){
+  strata_proxy<-as.numeric(paste(substr(levels(my.prop.df$Var2),1,1), substr(levels(my.prop.df$Var2),3,3), sep="0"))
+  levels(my.prop.df$Var2)<-strata_proxy
+}
+
 my.prop.df$Var2<-as.numeric(as.character(my.prop.df$Var2))
 my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
 
@@ -270,10 +275,10 @@ return(final.df)
 
 
 #Test:
-Index<-distribution.usingbiomass.fct(haddock.df) #plug in whatever species you want
+Index<-distribution.usingbiomass.fct(cod.df) #plug in whatever species you want
 require(reshape2)
 Index_long<-melt(Index, id.vars='year')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 
 require(ggplot2)
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Distribution Indices (DRicard)")+xlab("Year")+ylab("")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Cod Distribution Indices (DRicard)")+xlab("Year")+ylab("")
