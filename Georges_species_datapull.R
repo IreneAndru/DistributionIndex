@@ -1,7 +1,7 @@
+###Reworking of Dan Ricard's code (https://github.com/dfo-gulf-science/Maritimes-SUMMER-Atlas) to specifically apply to Georges Bank Species.
 ##
 library(RODBC, ROracle)
 ##
-
 #chan <- odbcConnect("PTRAN",AwesomeUser,AwesomePwd).
 chan<-ROracle::dbConnect(DBI::dbDriver("Oracle"), username=AwesomeUser, password=AwesomePwd, "PTRAN")
 rm(AwesomePwd, AwesomeUser)
