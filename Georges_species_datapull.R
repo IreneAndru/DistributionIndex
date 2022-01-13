@@ -4,7 +4,7 @@
 #Options:
 #Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524)? Assign Y or N appropriately to your decision:
 EGB_assessment_strata<-'Y'
-#EGB_assessment_strata<-'N'
+EGB_assessment_strata<-'N'
 
 ##
 library(RODBC, ROracle)
@@ -92,7 +92,7 @@ georges.strat <- georges.strata.tt
 georges.df <- merge(georges.tows.df, georges.strat, by="STRAT")
 georges.agg.df <- aggregate(SETNO~STRAT+AREA+YEAR, data=georges.df, length)
 t.df<-georges.agg.df[georges.agg.df$SETNO>=2,]
-surveyed.df <- aggregate(AREA~YEAR, data=t.df[t.df$STRAT %in% c("5Z1","5Z2","5Z3","5Z4"),], sum)
+surveyed.df <- aggregate(AREA~YEAR, data=t.df, sum)
 ## area surveyed, each stratum is counted in if at least 2 successful tows were done in a year
 
 table(t.df$STRAT, t.df$YEAR)
