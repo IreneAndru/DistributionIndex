@@ -1,8 +1,7 @@
 ###Reworking of Dan Ricard's code (https://github.com/dfo-gulf-science/Maritimes-SUMMER-Atlas) to specifically apply to Georges Bank Species.
 #####NOTE: This pulls everything in MANAGREA 523 and 524. If your species is different (yellowtail?), it will need modification.
 
-#Options:
-#Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524)? Assign Y or N appropriately to your decision:
+#Options: Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524)? Assign Y or N appropriately to your decision:
 EGB_assessment_strata<-'Y'
 EGB_assessment_strata<-'N'
 
