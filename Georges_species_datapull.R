@@ -1,4 +1,11 @@
 ###Reworking of Dan Ricard's code (https://github.com/dfo-gulf-science/Maritimes-SUMMER-Atlas) to specifically apply to Georges Bank Species.
+#####NOTE: This pulls everything in MANAGREA 523 and 524. If your species is different (yellowtail?), it will need modification.
+
+#Options:
+#Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524)? Assign Y or N appropriately to your decision:
+EGB_assessment_strata<-'Y'
+#EGB_assessment_strata<-'N'
+
 ##
 library(RODBC, ROracle)
 ##
@@ -44,9 +51,8 @@ tows.df$MANAREA<-as.numeric(tows.df$MANAREA)
 ## GEORGES survey, strata
 georges.tows.df <- subset(
 tows.df,
-((STRAT == '5Z1' | STRAT == '5Z2' | STRAT == '5Z3' | STRAT == '5Z4' | STRAT == '5Z5' | STRAT == '5Z6' | STRAT == '5Z7' | STRAT == '5Z8' | STRAT == '5Z9') & (MONTH == 2 | MONTH == 3 | MONTH == 4) & MANAREA%in%c(523,524)
-)
-) # Added AREA selection. Several of the strata (i.e. 5Z3, 5Z4, 5Z8) extend past the EGB Management unit, so the spatial selection of EGB cod requires limiting data to the intersect of Strata XX, and Areas 523 and 524. I also added month 4, as the survey has gone into April in recent years. Finally, added some brackets because it was applying the | with respect to the month selection.
+((STRAT == '5Z1' | STRAT == '5Z2' | STRAT == '5Z3' | STRAT == '5Z4' | STRAT == '5Z5' | STRAT == '5Z6' | STRAT == '5Z7' | STRAT == '5Z8' | STRAT == '5Z9') & (MONTH == 2 | MONTH == 3 | MONTH == 4))
+) # Added AREA selection. Several of the strata (i.e. 5Z3, 5Z4, 5Z8) extend past the EGB Management unit, so the spatial selection of EGB cod requires limiting data to the intersect of Strata XX, and Areas 523 and 524 for cod and haddock, but not for yellowtail. Species-specific areaxmanarea intersects are done later. I also added month 4, as the survey has gone into April in recent years. Finally, added some brackets because it was applying the | with respect to the month selection.
 
 ## strata statistics
 qu <- paste("
@@ -136,7 +142,7 @@ tows.df$MANAREA<-as.numeric(tows.df$MANAREA)
 ## GEORGES survey, strata
 georges.tows.df <- subset(
   tows.df,
-  ((STRAT == '5Z1' | STRAT == '5Z2' | STRAT == '5Z3' | STRAT == '5Z4' | STRAT == '5Z5' | STRAT == '5Z6' | STRAT == '5Z7' | STRAT == '5Z8' | STRAT == '5Z9') & (MONTH == 2 | MONTH == 3 | MONTH == 4) & MANAREA%in%c(523,524)
+  ((STRAT == '5Z1' | STRAT == '5Z2' | STRAT == '5Z3' | STRAT == '5Z4' | STRAT == '5Z5' | STRAT == '5Z6' | STRAT == '5Z7' | STRAT == '5Z8' | STRAT == '5Z9') & (MONTH == 2 | MONTH == 3 | MONTH == 4)
   )
 )
 
@@ -215,12 +221,14 @@ return(merged.df)
 ############
 cod.df <- extract.catch.fct(10)
 haddock.df <- extract.catch.fct(11)
-ytf.df <- extract.catch.fct(42)
+ylt.df <- extract.catch.fct(42)
 ##############
 
-## keep only the tows from the Georges survey
-keep.tows.df <- georges.df[georges.df$STRAT %in% c("5Z1","5Z2","5Z3","5Z4"),]
-keep.tows.df$unique.id <- paste0(keep.tows.df$MISSION, "-", keep.tows.df$SETNO)
-cod.keep.df <- merge(keep.tows.df, cod.df, by.x=c("MISSION","SETNO"), by.y=c("mission","setno"), all.x=TRUE)
+if(EGB_assessment_strata=='Y'){
+  cod.df<-subset(cod.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523, 524))
+  haddock.df<-subset(haddock.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523,524))
+  ylt.df<-subset(ylt.df, strat %in% c("5Z1","5Z2","5Z3","5Z4"))
+}
+
 
 
