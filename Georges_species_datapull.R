@@ -36,7 +36,6 @@ ROUND(TRUNC(SLAT/100)+MOD(SLAT,100)/60,5) SLA
 FROM groundfish.gsinf
 where
 type=1 AND
-gear in (3,9) AND
 extract(year from sdate) >= 1987
 order by YEAR, mission, setno
 ", sep="") #Added area column. Needed for selection of EGB unit. To avoid confusion with the spatial coverage (nm) area merged later, named the Management Area columnas ManArea.
@@ -127,8 +126,7 @@ area as MANAREA,
 ROUND(TRUNC(SLAT/100)+MOD(SLAT,100)/60,5) SLA
 FROM groundfish.gsinf
 where
-type=1 AND
-gear in (3,9)
+type=1
 order by YEAR, mission, setno
 ", sep="")
 
@@ -176,7 +174,6 @@ groundfish.gscat c,
 groundfish.GSSPECIES s
 where
 i.type=1 and
-i.gear in (3,9) AND
 i.mission = c.mission AND
 i.setno = c.setno AND
 s.CODE=c.spec and
