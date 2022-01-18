@@ -276,9 +276,8 @@ return(final.df)
 
 #Test:
 Index<-distribution.usingbiomass.fct(pollock.df) #plug in whatever species you want
-require(reshape2)
+#require(reshape2)
 Index_long<-melt(Index, id.vars='year')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
-
-require(ggplot2)
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))
+#require(ggplot2)
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle("4VW Pollock")
