@@ -190,7 +190,7 @@ if(Assessment_strata=='WC'){pollock.df<-subset(pollock.df, strat %in% c('474','4
 if(Assessment_strata=='4X5'){pollock.df<-subset(pollock.df, strat %in% c('470','471','472','473','474','475','476','480','481','482','483','484','485','490','491','492','493','494','495','5Z1','5Z2','5Z9'))} #incudes 4Xmn and EGB
 if(Assessment_strata=='4X5Y'){pollock.df<-subset(pollock.df, strat %in% c('470','471','472','473','474','475','476','480','481','482','483','484','485','490','491','492','493','494','495'))} #incudes 4Xmn but not EGB
 if(Assessment_strata=='5Z'){pollock.df<-subset(pollock.df, strat %in% c('5Z1','5Z2','5Z9'))} #Only EGB
-if(Assessment_strata=='4Xmn'){pollock.df<-subset(pollock.df, strat %in% c('470','471','472','473','475','477','478')}#only 4Xmn
+if(Assessment_strata=='4Xmn'){pollock.df<-subset(pollock.df, strat %in% c('470','471','472','473','475','477','478'))}#only 4Xmn
 if(Assessment_strata=='EC'){pollock.df<-subset(pollock.df, strat %in% c('558','559','440','441','442','443','444','445','446','447','448','449','450','451','452','453','454','455','456','457','458','459','460','461','462','463','464','465','466','470','471','472','473','475','477','478'))} #incudes 4Xmn
 if(Assessment_strata=='4VW'){pollock.df<-subset(pollock.df, strat %in% c('558','559','440','441','442','443','444','445','446','447','448','449','450','451','452','453','454','455','456','457','458','459','460','461','462','463','464','465','466'))} #incudes 4Xmn
 

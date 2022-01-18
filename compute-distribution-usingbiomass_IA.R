@@ -46,11 +46,11 @@ st.t <- names(my.prop.df)
 my.prop.df$year <- as.numeric(rownames(my.prop.df))
 my.prop.df$Var1 <- as.numeric(my.prop.df$Var1)
 ###For EGB, the strata are non-numeric, so if non-numeric strata exist they need to be converted to numeric:
-if(is.factor(my.prop.df$Var2)==TRUE){
-  strata_proxy<-as.numeric(paste(substr(levels(my.prop.df$Var2),1,1), substr(levels(my.prop.df$Var2),3,3), sep="0"))
-  levels(my.prop.df$Var2)<-strata_proxy
-}
-
+unique(my.prop.df$Var2[grep("Z", my.prop.df$Var2)])
+proxies<-data.frame(Var2=c(paste(unique(my.prop.df$Var2[grep("Z", my.prop.df$Var2)]), sep=".")))
+proxies$strata_proxy<-as.numeric(paste(substr(proxies$Var2,1,1), substr(proxies$Var2,3,3), sep="00"))
+my.prop.df<-merge(my.prop.df, proxies, all.x=TRUE)
+my.prop.df$Var2<-with(my.prop.df, ifelse(is.na(strata_proxy), as.character(Var2), strata_proxy))
 my.prop.df$Var2<-as.numeric(as.character(my.prop.df$Var2))
 my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
 
@@ -265,7 +265,7 @@ final.df <- data.frame(
   year=dwao.df$year, area.surveyed=dwao.df$survey.area/1000, DWAO=dwao.df$dwao/1000, D75=d50.d75.d95.df$D75/1000, D95=d50.d75.d95.df$D95/1000)
 
 ## if there are years with no catch, add NAs
-all.years <- data.frame(year=1970:2020)
+all.years <- data.frame(year=min(final.df$year):max(final.df$year))
 
 final.df <- merge(final.df, all.years, all.y=TRUE, by="year")
 
@@ -275,10 +275,10 @@ return(final.df)
 
 
 #Test:
-Index<-distribution.usingbiomass.fct(cod.df) #plug in whatever species you want
+Index<-distribution.usingbiomass.fct(pollock.df) #plug in whatever species you want
 require(reshape2)
 Index_long<-melt(Index, id.vars='year')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 
 require(ggplot2)
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1987,2021)+ggtitle("EGB Cod Distribution Indices (DRicard)")+xlab("Year")+ylab("")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))
