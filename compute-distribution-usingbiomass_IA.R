@@ -262,7 +262,7 @@ for(i in 1:length(yrs)){ # loop over years
 
 #final.df <- data.frame(year=names(area.occ), area.surveyed=df.to.fill[,"area.surveyed"]/1000, area.occupied=area.occ/1000, D75=df.to.fill[,"D75"], D95=df.to.fill[,"D95"], Gini=df.to.fill[,"Gini"])
 final.df <- data.frame(
-  year=dwao.df$year, area.surveyed=dwao.df$survey.area/1000, DWAO=dwao.df$dwao/1000, D75=d50.d75.d95.df$D75/1000, D95=d50.d75.d95.df$D95/1000)
+  year=dwao.df$year, area.surveyed=dwao.df$survey.area/1000, DWAO=dwao.df$dwao/1000, D50=d50.d75.d95.df$D50/1000, D75=d50.d75.d95.df$D75/1000, D95=d50.d75.d95.df$D95/1000)
 
 ## if there are years with no catch, add NAs
 all.years <- data.frame(year=min(final.df$year):max(final.df$year))
@@ -276,8 +276,9 @@ return(final.df)
 
 #Test:
 Index<-distribution.usingbiomass.fct(pollock.df) #plug in whatever species you want
-#require(reshape2)
+require(reshape2)
 Index_long<-melt(Index, id.vars='year')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
-#require(ggplot2)
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle("4VW Pollock")
+require(ggplot2)
+main_title<-paste(Assessment_strata,'Pollock', sep=" ")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)
