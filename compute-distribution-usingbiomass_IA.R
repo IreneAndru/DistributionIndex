@@ -55,7 +55,7 @@ my.prop.df$Var2<-as.numeric(as.character(my.prop.df$Var2))
 my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
 
 
-## strat statistics
+## strata statistics
 qu <- paste("
 select
 *
