@@ -42,26 +42,26 @@ table.all <- table(catch.t.df2$year, catch.t.df2$strat)
 my.prop <- table.catch / table.all
 ## turn into a long data frame
 my.prop.df <- as.data.frame(my.prop)
+names(my.prop.df)<-c('yr','stratum','prop')
+#my.prop.df$Var1<-as.numeric(as.character(my.prop.df$Var1))
 st.t <- names(my.prop.df)
 my.prop.df$year <- as.numeric(rownames(my.prop.df))
-my.prop.df$Var1 <- as.numeric(my.prop.df$Var1)
+my.prop.df$Var1 <- as.numeric(my.prop.df$stratum)
 ###For EGB, the strata are non-numeric, so if non-numeric strata exist they need to be converted to numeric:
-unique(my.prop.df$Var2[grep("Z", my.prop.df$Var2)])
-proxies<-data.frame(Var2=c(paste(unique(my.prop.df$Var2[grep("Z", my.prop.df$Var2)]), sep=".")))
-proxies$strata_proxy<-as.numeric(paste(substr(proxies$Var2,1,1), substr(proxies$Var2,3,3), sep="00"))
+unique(my.prop.df$stratum[grep("Z", my.prop.df$stratum)])
+proxies<-data.frame(stratum=c(paste(unique(my.prop.df$stratum[grep("Z", my.prop.df$stratum)]), sep=".")))
+proxies$strata_proxy<-as.numeric(paste(substr(proxies$stratum,1,1), substr(proxies$stratum,3,3), sep="00"))
 my.prop.df<-merge(my.prop.df, proxies, all.x=TRUE)
-my.prop.df$Var2<-with(my.prop.df, ifelse(is.na(strata_proxy), as.character(Var2), strata_proxy))
-my.prop.df$Var2<-as.numeric(as.character(my.prop.df$Var2))
-my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
+my.prop.df$stratum<-with(my.prop.df, ifelse(is.na(strata_proxy), as.character(stratum), strata_proxy))
+my.prop.df$stratum<-as.numeric(as.character(my.prop.df$stratum))
+#my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
 
 
 ## strata statistics
-qu <- paste("
-select
-*
-from
-groundfish.gsstratum
-", sep="")
+
+#For non EGB Species
+if(EGB_assessment_strata=='N'){
+qu <- paste("select * from groundfish.gsstratum", sep="")
 
 strat.stats.df <-ROracle::dbGetQuery(chan, qu)
 
@@ -70,6 +70,44 @@ merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all
 merged.df$area.occupied <- merged.df$prop * merged.df$AREA  * (1.852^2)
 
 area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
+}
+
+if(EGB_assessment_strata=='Y_EGB'){
+
+qu <- paste("select * from usnefsc.dfo5zjm", sep="")
+
+strat.stats.df <-ROracle::dbGetQuery(chan, qu)
+
+strat.stats.df<-subset(strat.stats.df, STRAT%in%c('5Z1','5Z2','5Z3','5Z4'))
+
+merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all.x=TRUE, all.y=FALSE)
+
+merged.df$area.occupied <- merged.df$prop * merged.df$AREA  #* (1.852^2)
+
+area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
+}
+
+  if(EGB_assessment_strata=='Y_GB'){
+      qu <- paste("select * from groundfish.gsstratum", sep="")
+
+      strat.stats.df <-ROracle::dbGetQuery(chan, qu)
+      strat.stats.df<-subset(strat.stats.df, STRAT%in%c('5Z1','5Z2','5Z3','5Z4'))
+
+      qu <- paste("select * from usnefsc.dfo5zghno", sep="")
+
+      strat.stats.df2 <-ROracle::dbGetQuery(chan, qu)
+      strat.stats.df2<-subset(strat.stats.df2, STRAT%in%c('5Z6','5Z7'))
+      strat.stats.df<-rbind(strat.stats.df, strat.stats.df2)
+
+      strat.stats.df<-subset(strat.stats.df, STRAT%in%c('5Z1','5Z2','5Z3','5Z4'))
+
+      merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all.x=TRUE, all.y=FALSE)
+
+      merged.df$area.occupied <- merged.df$prop * merged.df$AREA  #* (1.852^2)
+
+      area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
+    }
+
 
 # Gini index
 summer.strat.stats.df <- subset(
@@ -136,12 +174,12 @@ for(i in 1:length(yrs)){ # loop over years
   ss <- unique(n.tows$strat)
 
 
-  survey.area <- sum(st.area[st.area$stratum %in% ss, "area"]) * (1.852^2)
+  survey.area <- sum(st.area[st.area$stratum %in% ss, "area"]) #* (1.852^2)
 
   z.out <- merge(merge(z, n.tows, by="strat"), st.area, by.x="strat", by.y="stratum")
   z.out$area.divided.by.tows <- z.out$area / z.out$number.tows
   z.out$I <- ifelse(z.out$totwgtcorr>0,1,0)
-  DWAO <- sum(z.out$area.divided.by.tows * z.out$I) * (1.852^2)
+  DWAO <- sum(z.out$area.divided.by.tows * z.out$I) #* (1.852^2)
 
 
   if(DWAO>0){
@@ -178,9 +216,9 @@ for(i in 1:length(yrs)){ # loop over years
     dwao.df[dwao.df$year==yrs[i],"dwao"] <- DWAO
     dwao.df[dwao.df$year==yrs[i],"survey.area"] <- survey.area
     d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"survey.area"] <- survey.area
-    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D50"] <- D.50 * (1.852^2)
-    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D75"] <- D.75 * (1.852^2)
-    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D95"] <- D.95 * (1.852^2)
+    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D50"] <- D.50 #* (1.852^2)
+    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D75"] <- D.75 #* (1.852^2)
+    d50.d75.d95.df[d50.d75.d95.df$year==yrs[i],"D95"] <- D.95 #* (1.852^2)
   } else {
 
     dwao.df[dwao.df$year==yrs[i],"dwao"] <- 0
@@ -274,11 +312,38 @@ return(final.df)
 } # end function
 
 
-#Test:
-Index<-distribution.usingbiomass.fct(pollock.df) #plug in whatever species you want
+#Plot for Cod
+EGB_assessment_strata<-'Y_EGB'
+Index<-distribution.usingbiomass.fct(cod.df) #plug in whatever species you want
 require(reshape2)
 Index_long<-melt(Index, id.vars='year')
+#Index_long<-subset(Index_long, variable!='D50')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 require(ggplot2)
-main_title<-paste(Assessment_strata,'Pollock', sep=" ")
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)
+main_title<-paste("EGB",'Cod_DFO', sep=" ")
+
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")
+
+
+#Plot for Haddock
+EGB_assessment_strata<-'Y_EGB'
+Index<-distribution.usingbiomass.fct(haddock.df) #plug in whatever species you want
+require(reshape2)
+Index_long<-melt(Index, id.vars='year')
+#Index_long<-subset(Index_long, variable!='D50')
+Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
+require(ggplot2)
+main_title<-paste("EGB",'Haddock_DFO', sep=" ")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")
+
+
+#Plot for Yellowtail
+EGB_assessment_strata<-'Y_GB'
+Index<-distribution.usingbiomass.fct(ylt.df) #plug in whatever species you want
+require(reshape2)
+Index_long<-melt(Index, id.vars='year')
+#Index_long<-subset(Index_long, variable!='D50')
+Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
+require(ggplot2)
+main_title<-paste("GB",'Yellowtail_DFO', sep=" ")
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")
