@@ -64,8 +64,6 @@ if (data_source=='NMFS'){
     georges.tows.df <- subset(tows.df, STRAT%in%c('01130','01230','01160','01170','01180','01190','01200','01210','01220')&MANAREA%in%c(551,552,561,562,522,525))
   }
 
-
-  georges.tows.df <- subset(tows.df, STRAT%in%c('01160','01170','01180','01190','01200','01210','01220')&MANAREA%in%c(551,552,561,562))#Keep adding strata
   # Added AREA selection. Several of the strata (i.e. 5Z3, 5Z4, 5Z8) extend past the EGB Management unit, so the spatial selection of EGB cod requires limiting data to the intersect of Strata XX, and Areas 523 and 524 for cod and haddock, but not for yellowtail. Species-specific areaxmanarea intersects are done later. I also added month 4, as the survey has gone into April in recent years. Finally, added some brackets because it was applying the | with respect to the month selection.
 }
 
@@ -125,8 +123,9 @@ surveyed.df <- aggregate(AREA~YEAR+SEASON, data=t.df, sum)
 ## area surveyed, each stratum is counted in if at least 2 successful tows were done in a year
 
 table(t.df$STRAT, t.df$YEAR)
+ggplot(t.df, aes(as.numeric(YEAR), STRAT))+geom_tile(aes(fill=SETNO))+facet_wrap(~SEASON, ncol=1)+theme_bw()+xlab("YEAR")
 
-ggplot(surveyed.df, aes(as.numeric(YEAR), AREA))+geom_point()+theme_bw()+ylim(0,max(surveyed.df$AREA))+xlab("YEAR")+facet_wrap(~SEASON, ncol=1)
+ggplot(surveyed.df, aes(as.numeric(YEAR), AREA))+geom_point()+theme_bw()+xlab("YEAR")+facet_wrap(~SEASON, ncol=1)
 
 #############
 ##
