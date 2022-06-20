@@ -42,12 +42,14 @@ table.all <- table(catch.t.df2$year, catch.t.df2$strat)
 my.prop <- table.catch / table.all
 ## turn into a long data frame
 my.prop.df <- as.data.frame(my.prop)
+my.prop.df$Freq[is.nan(my.prop.df$Freq)]<-NA
 names(my.prop.df)<-c('yr','stratum','prop')
 #my.prop.df$Var1<-as.numeric(as.character(my.prop.df$Var1))
 st.t <- names(my.prop.df)
 my.prop.df$year <- as.numeric(rownames(my.prop.df))
 my.prop.df$Var1 <- as.numeric(my.prop.df$stratum)
 ###For EGB, the strata are non-numeric, so if non-numeric strata exist they need to be converted to numeric:
+if(data_source=='DFO'){
 unique(my.prop.df$stratum[grep("Z", my.prop.df$stratum)])
 proxies<-data.frame(stratum=c(paste(unique(my.prop.df$stratum[grep("Z", my.prop.df$stratum)]), sep=".")))
 proxies$strata_proxy<-as.numeric(paste(substr(proxies$stratum,1,1), substr(proxies$stratum,3,3), sep="00"))
@@ -55,11 +57,12 @@ my.prop.df<-merge(my.prop.df, proxies, all.x=TRUE)
 my.prop.df$stratum<-with(my.prop.df, ifelse(is.na(strata_proxy), as.character(stratum), strata_proxy))
 my.prop.df$stratum<-as.numeric(as.character(my.prop.df$stratum))
 #my.prop.df <- tidyr::pivot_longer(my.prop.df, cols=all_of(st.t), names_to="stratum", values_to="prop")
-
+}
 
 ## strata statistics
 
 #For non EGB Species
+if(data_source=='DFO'){
 if(EGB_assessment_strata=='N'){
 qu <- paste("select * from groundfish.gsstratum", sep="")
 
@@ -107,6 +110,46 @@ area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, su
 
       area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
     }
+}
+
+if(data_source=="NMFS"){
+  if(EGB_assessment_strata=='Y_EGB'){
+
+    qu <- paste("select * from usnefsc.nmfs5zjm", sep="")
+
+    strat.stats.df <-ROracle::dbGetQuery(chan, qu)
+
+    strat.stats.df<-subset(strat.stats.df, STRAT%in%c('01160','01170','01180','01190','01200','01210','01220'))
+    merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all.x=TRUE, all.y=FALSE)
+
+    merged.df$area.occupied <- merged.df$prop * merged.df$AREA  #* (1.852^2)
+
+    area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
+  }
+
+  if(EGB_assessment_strata=='Y_GB'){
+    qu <- paste("select * from usnefsc.nmfs5zjm", sep="")
+
+    strat.stats.df <-ROracle::dbGetQuery(chan, qu)
+    strat.stats.df<-subset(strat.stats.df, STRAT%in%c('01160','01170','01180','01190','01200','01210','01220'))
+
+    qu <- paste("select * from usnefsc.nmfs5zghno", sep="")
+
+    strat.stats.df2 <-ROracle::dbGetQuery(chan, qu)
+    strat.stats.df2<-subset(strat.stats.df2, STRAT%in%c('01130','01140','01150','01160','01170','01180','01190','01200','01210','01220','01230','01240','01250'))
+    strat.stats.df<-rbind(strat.stats.df, strat.stats.df2)
+    merged.df <- merge(my.prop.df, strat.stats.df, by.x="stratum", by.y="STRAT", all.x=TRUE, all.y=FALSE)
+
+    merged.df$area.occupied <- merged.df$prop * merged.df$AREA  #* (1.852^2)
+
+    area.occ <- tapply(na.omit(merged.df)$area.occupied, na.omit(merged.df)$year, sum)
+  }
+
+
+
+
+}
+
 
 
 # Gini index
@@ -300,7 +343,7 @@ for(i in 1:length(yrs)){ # loop over years
 
 #final.df <- data.frame(year=names(area.occ), area.surveyed=df.to.fill[,"area.surveyed"]/1000, area.occupied=area.occ/1000, D75=df.to.fill[,"D75"], D95=df.to.fill[,"D95"], Gini=df.to.fill[,"Gini"])
 final.df <- data.frame(
-  year=dwao.df$year, area.surveyed=dwao.df$survey.area/1000, DWAO=dwao.df$dwao/1000, D50=d50.d75.d95.df$D50/1000, D75=d50.d75.d95.df$D75/1000, D95=d50.d75.d95.df$D95/1000)
+  year=dwao.df$year, area.surveyed=dwao.df$survey.area, DWAO=dwao.df$dwao, D50=d50.d75.d95.df$D50, D75=d50.d75.d95.df$D75, D95=d50.d75.d95.df$D95)
 
 ## if there are years with no catch, add NAs
 all.years <- data.frame(year=min(final.df$year):max(final.df$year))
@@ -313,20 +356,7 @@ return(final.df)
 
 
 #Plot for Cod
-EGB_assessment_strata<-'Y_EGB'
-Index<-distribution.usingbiomass.fct(cod.df) #plug in whatever species you want
-require(reshape2)
-Index_long<-melt(Index, id.vars='year')
-#Index_long<-subset(Index_long, variable!='D50')
-Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
-require(ggplot2)
-main_title<-paste("EGB",'Cod_DFO', sep=" ")
-
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")
-
-
-#Plot for Haddock
-EGB_assessment_strata<-'Y_EGB'
+#EGB_assessment_strata<-'Y_EGB'
 Index<-distribution.usingbiomass.fct(haddock.df) #plug in whatever species you want
 require(reshape2)
 Index_long<-melt(Index, id.vars='year')
@@ -334,16 +364,6 @@ Index_long<-melt(Index, id.vars='year')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 require(ggplot2)
 main_title<-paste("EGB",'Haddock_DFO', sep=" ")
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")
 
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1986,2021)+ylim(0,max(Index_long$value, na.rm=TRUE))+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)") #For missing surveys: +geom_point(data=subset(Index_long, year==2021), aes(year, value, col=variable))
 
-#Plot for Yellowtail
-EGB_assessment_strata<-'Y_GB'
-Index<-distribution.usingbiomass.fct(ylt.df) #plug in whatever species you want
-require(reshape2)
-Index_long<-melt(Index, id.vars='year')
-#Index_long<-subset(Index_long, variable!='D50')
-Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
-require(ggplot2)
-main_title<-paste("GB",'Yellowtail_DFO', sep=" ")
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1983,2021)+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)")

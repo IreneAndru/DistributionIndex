@@ -65,7 +65,7 @@ if (data_source=='NMFS'){
   }
 
 
-  georges.tows.df <- subset(tows.df, STRAT%in%c('01160','01170','01180','01190','01120','01210','01220'))#Keep adding strata
+  georges.tows.df <- subset(tows.df, STRAT%in%c('01160','01170','01180','01190','01200','01210','01220')&MANAREA%in%c(551,552,561,562))#Keep adding strata
   # Added AREA selection. Several of the strata (i.e. 5Z3, 5Z4, 5Z8) extend past the EGB Management unit, so the spatial selection of EGB cod requires limiting data to the intersect of Strata XX, and Areas 523 and 524 for cod and haddock, but not for yellowtail. Species-specific areaxmanarea intersects are done later. I also added month 4, as the survey has gone into April in recent years. Finally, added some brackets because it was applying the | with respect to the month selection.
 }
 
@@ -94,8 +94,6 @@ if(EGB_assessment_strata=='Y_GB'){
   strat.stats.df2<-subset(strat.stats.df2, STRAT%in%c('01130','01140','01150','01160','01170','01180','01190','01200','01210','01220','01230','01240','01250'))
   strat.stats.df<-rbind(strat.stats.df, strat.stats.df2)
 
-  strat.stats.df<-subset(strat.stats.df, STRAT%in%c('5Z1','5Z2','5Z3','5Z4'))
-
 }
 
 georges.strata.stats.df <-strat.stats.df
@@ -120,14 +118,16 @@ georges.strat <- georges.strata.tt
 #odbcClose(chan)
 
 georges.df <- merge(georges.tows.df, georges.strat, by="STRAT")
-georges.agg.df <- aggregate(SETNO~STRAT+AREA+YEAR, data=georges.df, length)
+georges.df$SEASON<-with(georges.df,ifelse(MONTH<6, 'SPRING','FALL'))
+georges.agg.df <- aggregate(SETNO~STRAT+AREA+YEAR+SEASON, data=georges.df, length)
 t.df<-georges.agg.df[georges.agg.df$SETNO>=2,]
-surveyed.df <- aggregate(AREA~YEAR, data=t.df, sum)
+surveyed.df <- aggregate(AREA~YEAR+SEASON, data=t.df, sum)
 ## area surveyed, each stratum is counted in if at least 2 successful tows were done in a year
 
 table(t.df$STRAT, t.df$YEAR)
 
-plot(AREA~YEAR, data=surveyed.df, type='b')
+ggplot(surveyed.df, aes(as.numeric(YEAR), AREA))+geom_point()+theme_bw()+ylim(0,max(surveyed.df$AREA))+xlab("YEAR")+facet_wrap(~SEASON, ncol=1)
+
 #############
 ##
 
@@ -170,80 +170,74 @@ order by YEAR, mission, setno
   tows.df$MANAREA<-as.numeric(tows.df$MANAREA)
 
   ## GEORGES survey, strata
-  georges.tows.df <- tows.df
+  #For non EGB Species
+  if(EGB_assessment_strata=='Y_EGB'){
+
+    georges.tows.df<-subset(tows.df, STRAT%in%c('01160','01170','01180','01190','01200','01210','01220')&MANAREA%in%c(551,552,561,562))
+
+  }
+
+  if(EGB_assessment_strata=='Y_GB'){
+
+    georges.tows.df<-subset(strat.stats.df, STRAT%in%c('01130','01140','01150','01160','01170','01180','01190','01200','01210','01220','01230','01240','01250')&MANAREA%in%c(551,552,561,562,522,525))
+      }
 
 
   ## table(georges.tows.df$YEAR)
 
-
-
-
-
-
-  qu <- paste("
-  SELECT
-cruise6 as mission,
-tow as setno,
-stratum as strat,
-begin_est_towdate as sdate,
-est_year as YEAR,
-est_month as MONTH,
-est_day as DAY,
-mindepth as dmin,
-maxdepth as dmax,
-bottemp as bottom_temperature,
-botsalin as bottom_salinity,
-dopdistb as dist,
-svgear as gear,
-AREA as ManArea,
-DECDEG_BEGLON SLO,
-DECDEG_BEGLAT SLA
-FROM usnefsc.uss_station
-where
-SHG<=136 AND
-est_year >= 1978
-order by YEAR, mission, setno
-", sep="")
-
-
-
   qu <- paste("
 SELECT
-i.cruise6 as mission,
-i.tow as setno,
-i.stratum as strat,
-i.begin_est_towdate as sdate,
-i.est_year as YEAR,
-i.est_month as MONTH,
-i.est_day as DAY,
-c.svspp as spec,
-s.comname as comm,
-c.expcatchnum as totno,
-c.expcatchwt as totwgt,
-i.mindepth as dmin,
-i.maxdepth as dmax,
-i.bottemp as bottom_temperature,
-i.botsalin as bottom_salinity,
-i.dopdistb as dist,
-i.svgear as gear,
-c.expcatchnum * (1.75/i.dopdistb) as totnocorr,
-c.expcatchwt * (1.75/i.dopdistb) as totwgtcorr
+c.cruise6 as mission,
+c.svvessel as vessel,
+c.tow as setno,
+c.stratum as strat,
+c.begin_est_towdate as sdate,
+c.est_year as YEAR,
+c.est_month as MONTH,
+c.est_day as DAY,
+d.station as station,
+d.svspp as spec,
+d.expcatchnum as totno,
+d.expcatchwt as totwgt,
+c.mindepth as dmin,
+c.maxdepth as dmax,
+c.bottemp as bottom_temperature,
+c.botsalin as bottom_salinity,
+c.dopdistb as dist,
+c.svgear as gear,
+d.expcatchnum as totnocorr,
+d.expcatchwt as totwgtcorr
 FROM
-usnefsc.uss_station i,
-usnefsc.uss_catch c,
-usnefsc.uss_species_codes s
+usnefsc.uss_station c,
+usnefsc.uss_catch d
 where
 SHG<136 and
-i.cruise6 = c.cruise6 AND
-i.tow = c.tow AND
-s.svspp=c.svspp and
-s.svspp='",spec.num,"'
-order by YEAR, i.cruise6, i.tow", sep="")
+c.cruise6 = d.cruise6 AND
+c.tow = d.tow AND
+d.station=c.station AND
+c.stratum=d.stratum AND
+c.status_code=d.status_code AND
+c.id=d.id and
+d.svspp='",paste(0,spec.num,sep=""),"'
+order by YEAR, c.cruise6, c.tow", sep="")
 
+  #c.expcatchnum * (0.991/i.dopdistb) as totnocorr,
+  #c.expcatchwt * (0.991/i.dopdistb) as totwgtcorr
   #spec.df <- sqlQuery(chan, qu)
   spec.df<-ROracle::dbGetQuery(chan, qu)
   spec.df$MONTH<-as.numeric(spec.df$MONTH)
   merged.df <- merge(spec.df, georges.tows.df, all.y=TRUE) #Removing the merge id column names precludes the need to then remove the duplicated variables.
+
+  #Quick and dirty standardization
+  ggplot(merged.df, aes(DIST))+geom_histogram()+facet_wrap(~VESSEL)
+  vessels2<-aggregate(DIST~VESSEL, FUN="mean", merged.df)
+  names(vessels2)[2]<-'STD_DIST'
+  merged.df<-merge(merged.df, vessels2, all.x=TRUE)#Note there are some records in the early time series where DIST is NA. THose records will be put in uncorrected.
+  merged.df$TOTNOCORR<-with(merged.df, TOTNO*DIST/STD_DIST)
+  merged.df$TOTNOCORR<-with(merged.df, ifelse(is.na(TOTNOCORR), TOTNO, TOTNOCORR))
+  merged.df$TOTWGTCORR<-with(merged.df, TOTWGT*DIST/STD_DIST)
+  merged.df$TOTWGTCORR<-with(merged.df, ifelse(is.na(TOTWGTCORR), TOTNO, TOTWGTCORR))
+
   merged.df[is.na(merged.df$SPEC),]$SPEC <- spec.num
 
   merged.df[is.na(merged.df$COMM),]$COMM <- unique(merged.df[!is.na(merged.df$COMM),]$COMM)
@@ -275,19 +269,16 @@ order by YEAR, i.cruise6, i.tow", sep="")
 
 #Application:
 ############
-cod.df <- extract.catch.fct(10)
-haddock.df <- extract.catch.fct(11)
-ylt.df <- extract.catch.fct(42)
+cod.df <- extract.catch.fct(73)
+cod.df.spring<-subset(cod.df,as.numeric(month)<6)
+cod.df.fall<-subset(cod.df,as.numeric(month)>6)
+haddock.df <- extract.catch.fct(74)
+haddock.df.spring<-subset(haddock.df,as.numeric(month)<6)
+haddock.df.fall<-subset(haddock.df,as.numeric(month)>6)
+ylt.df <- extract.catch.fct(105)#Won't work right now. Need to for the query (paste in 0, species name)
+
 ##############
 
-if(EGB_assessment_strata=='Y_EGB'){
-  cod.df<-subset(cod.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523, 524))
-  haddock.df<-subset(haddock.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523,524))
-}
-
-if(EGB_assessment_strata=='Y_GB'){
-  ylt.df<-subset(ylt.df, strat %in% c("5Z1","5Z2","5Z3","5Z4"))
-}
 
 
 
