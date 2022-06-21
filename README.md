@@ -4,4 +4,4 @@ This is a project which works off of Dan Ricard's code to provide a distirbution
 
 This project implies that you understand R cod, and code should not be used without you understanding what it does. For example, species-specific knowledge of areas, strata and management areas is required to avoid nonsensical results. There have been no vessel conversion factors applied.
 
-The run consists of two coding files: a species pull file and a processing file. The species pull files are specific to their respective data sources (i.e. NMFS or DFO). Pick the right one for what you want.
+The run consists of two coding files: a species pull file (data_pull_area_dataSource) and a processing file (compute distribution indices). The species pull files are specific to their respective data sources (i.e. NMFS or DFO). Pick the right one for the combo of area, species and data source you want. The output of the data pull file then goes through the single processing file. Enjoy.
