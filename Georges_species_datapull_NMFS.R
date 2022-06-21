@@ -270,10 +270,15 @@ order by YEAR, c.cruise6, c.tow", sep="")
 ############
 cod.df <- extract.catch.fct(73)
 cod.df.spring<-subset(cod.df,as.numeric(month)<6)
+write.csv(cod.df.spring, "cod.nmfs.spring.csv")
 cod.df.fall<-subset(cod.df,as.numeric(month)>6)
+write.csv(cod.df.fall, "cod.nmfs.fall.csv")
 haddock.df <- extract.catch.fct(74)
 haddock.df.spring<-subset(haddock.df,as.numeric(month)<6)
+write.csv(haddock.df.spring, "haddock.nmfs.spring.csv")
 haddock.df.fall<-subset(haddock.df,as.numeric(month)>6)
+write.csv(haddock.df.fall, "haddock.nmfs.fall.csv")
+
 ylt.df <- extract.catch.fct(105)#Won't work right now. Need to for the query (paste in 0, species name)
 
 ##############

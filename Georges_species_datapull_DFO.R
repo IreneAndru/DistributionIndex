@@ -133,6 +133,8 @@ surveyed.df <- aggregate(AREA~YEAR, data=t.df, sum)
 
 table(t.df$STRAT, t.df$YEAR)
 
+ggplot(t.df, aes(as.numeric(YEAR), STRAT))+geom_tile(aes(fill=SETNO))+theme_bw()+xlab("YEAR")
+
 plot(AREA~YEAR, data=surveyed.df, type='b')
 #############
 ##
@@ -259,9 +261,13 @@ return(merged.df)
 
 #Application:
 ############
-cod.df <- extract.catch.fct(10)
-haddock.df <- extract.catch.fct(11)
-ylt.df <- extract.catch.fct(42)
+cod.dfo <- extract.catch.fct(10)
+write.csv(cod.dfo, "cod.dfo.csv")
+haddock.dfo <- extract.catch.fct(11)
+write.csv(haddock.dfo, "haddock.dfo.csv")
+
+ylt.dfo <- extract.catch.fct(42) #Needs work
+write.csv(ytl.dfo, "ytl.dfo.csv")
 ##############
 
 if(EGB_assessment_strata=='Y_EGB'){

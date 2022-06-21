@@ -357,13 +357,15 @@ return(final.df)
 
 #Plot for Cod
 #EGB_assessment_strata<-'Y_EGB'
-Index<-distribution.usingbiomass.fct(haddock.df) #plug in whatever species you want
+Index<-distribution.usingbiomass.fct(cod.dfo) #plug in whatever species you want
 require(reshape2)
 Index_long<-melt(Index, id.vars='year')
 #Index_long<-subset(Index_long, variable!='D50')
 Index_long$Facets<-with(Index_long, ifelse(variable=="area.surveyed", 'Area Surveyed','Distribution Indices'))
 require(ggplot2)
-main_title<-paste("EGB",'Haddock_DFO', sep=" ")
+main_title<-paste("EGB",'Cod_DFO', sep=" ")
 
-ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1986,2021)+ylim(0,max(Index_long$value, na.rm=TRUE))+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)") #For missing surveys: +geom_point(data=subset(Index_long, year==2021), aes(year, value, col=variable))
+ggplot(Index_long)+geom_line(data=Index_long, aes(year, value, col=variable))+theme_bw()+xlim(1986,2022)+ylim(0,max(Index_long$value, na.rm=TRUE))+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)") #For missing surveys: +geom_point(data=subset(Index_long, year==2021), aes(year, value, col=variable))
+
+#ggplot(Index_long)+geom_point(data=Index_long, aes(year, value, col=variable))+geom_line(data=Index_long, aes(year, value, col=variable), alpha=0.5)+geom_smooth(data=subset(Index_long, variable!='area.surveyed'), aes(year, value, col=variable), se=FALSE)+theme_bw()+xlim(1986,2021)+ylim(0,max(Index_long$value, na.rm=TRUE))+xlab("Year")+ylab("")+ guides(col=guide_legend(title="Indicator"))+ggtitle(main_title)+ylab("NM2 (thousands)") #For missing surveys: +geom_point(data=subset(Index_long, year==2021), aes(year, value, col=variable))
 
