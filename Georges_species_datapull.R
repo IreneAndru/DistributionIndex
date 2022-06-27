@@ -4,7 +4,7 @@
 #Options: test
 #Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524)? Assign Y or N appropriately to your decision:
 EGB_assessment_strata<-'Y'
-EGB_assessment_strata<-'N'
+#EGB_assessment_strata<-'N'
 
 ##
 library(RODBC, ROracle)

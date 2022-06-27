@@ -17,7 +17,7 @@ library(RODBC, ROracle)
 ##
 #chan <- odbcConnect("PTRAN",AwesomeUser,AwesomePwd).
 chan<-ROracle::dbConnect(DBI::dbDriver("Oracle"), username=AwesomeUser, password=AwesomePwd, "PTRAN")
-rm(AwesomePwd, AwesomeUser)
+#rm(AwesomePwd, AwesomeUser)
 
 ##Setting up function for DFO Pull
 #################
@@ -123,9 +123,11 @@ surveyed.df <- aggregate(AREA~YEAR+SEASON, data=t.df, sum)
 ## area surveyed, each stratum is counted in if at least 2 successful tows were done in a year
 
 table(t.df$STRAT, t.df$YEAR)
+
+
 ggplot(t.df, aes(as.numeric(YEAR), STRAT))+geom_tile(aes(fill=SETNO))+facet_wrap(~SEASON, ncol=1)+theme_bw()+xlab("YEAR")
 
-ggplot(surveyed.df, aes(as.numeric(YEAR), AREA))+geom_point()+theme_bw()+xlab("YEAR")+facet_wrap(~SEASON, ncol=1)
+ggplot(surveyed.df, aes(as.numeric(YEAR), AREA))+geom_point()+theme_bw()+xlab("YEAR")+facet_wrap(~SEASON, ncol=1)+ylim(0,5500)
 
 #############
 ##
