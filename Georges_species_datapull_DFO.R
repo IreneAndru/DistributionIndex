@@ -271,8 +271,8 @@ write.csv(ytl.dfo, "ytl.dfo.csv")
 ##############
 
 if(EGB_assessment_strata=='Y_EGB'){
-  cod.df<-subset(cod.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523, 524))
-  haddock.df<-subset(haddock.df, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523,524))
+  cod.dfo<-subset(cod.dfo, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523, 524))
+  haddock.dfo<-subset(haddock.dfo, strat %in% c("5Z1","5Z2","5Z3","5Z4")&manarea%in%c(523,524))
 }
 
 if(EGB_assessment_strata=='Y_GB'){

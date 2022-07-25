@@ -1,5 +1,6 @@
 ###Reworking of Dan Ricard's code (https://github.com/dfo-gulf-science/Maritimes-SUMMER-Atlas) to specifically apply to Georges Bank Species.
 #####NOTE: This pulls everything in MANAGREA 523 and 524. If your species is different (yellowtail?), it will need modification.
+require(ggplot2)
 
 #Options: test
 #Do you want this limited to just EGB (strata 5Z1-5Z4, management areas 523-524 for cod/haddock, and Strata 5Z1-5Z4 for yt)? Assign Y or N appropriately to your decision:
@@ -13,7 +14,7 @@ data_source<-'NMFS'
 
 
 ##
-library(RODBC, ROracle)
+library(RODBC, ROracle, ggplot2)
 ##
 #chan <- odbcConnect("PTRAN",AwesomeUser,AwesomePwd).
 chan<-ROracle::dbConnect(DBI::dbDriver("Oracle"), username=AwesomeUser, password=AwesomePwd, "PTRAN")
